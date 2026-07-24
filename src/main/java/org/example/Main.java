@@ -21,6 +21,6 @@ public class Main implements Runnable {
     }
 
     enum Duration {
-        MONTH, YEAR, WEEK, DAY
+        MONTH, YEAR, WEEK, DAY,
     }
 }
