@@ -4,6 +4,12 @@ A command-line application that fetches and displays the most popular GitHub rep
 
 This project was built to practice working with REST APIs, HTTP requests, JSON parsing, command-line applications, and Maven using modern Java.
 
+## Project Reference
+
+Built for the roadmap.sh project:
+
+[GitHub Trending CLI](https://roadmap.sh/projects/github-trending-cli)
+
 ---
 
 ## Features
