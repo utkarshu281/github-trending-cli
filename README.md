@@ -53,7 +53,7 @@ src
 Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/github-trending-cli.git
+git clone https://github.com/utkarshu281/github-trending-cli.git
 ```
 
 Move into the project:
