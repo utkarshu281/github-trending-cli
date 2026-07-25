@@ -10,14 +10,15 @@ public class Main implements Runnable {
     Duration duration;
     @CommandLine.Option(names = {"--l", "--limit"}, description = "limit the result")
     private int value=10;
-
     @Override
     public void run() {
-        System.out.println(duration +"and"+ value);
+        APICall apiCall = new APICall(duration,value);
+        apiCall.call();
     }
 
     public static void main(String[] args) {
         System.exit(new CommandLine(new Main()).execute(args));
+
     }
 
     enum Duration {
