@@ -6,18 +6,23 @@ import picocli.CommandLine;
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 @CommandLine.Command(name="GithubtrendingCLI", mixinStandardHelpOptions = true)
 public class Main implements Runnable {
+    private final Parser jsonParse;
+    Main(Parser jsonParse){
+        this.jsonParse=jsonParse;
+    }
     @CommandLine.Option(names = {"--d", "--duration"}, defaultValue = "WEEK", description = "Duration")
     Duration duration;
     @CommandLine.Option(names = {"--l", "--limit"}, description = "limit the result")
     private int value=10;
     @Override
     public void run() {
-        APICall apiCall = new APICall(duration,value);
+        APICall apiCall = new APICall(duration,value,jsonParse);
         apiCall.call();
     }
 
     public static void main(String[] args) {
-        System.exit(new CommandLine(new Main()).execute(args));
+        Parser jsonParse = new Parser();
+        System.exit(new CommandLine(new Main(jsonParse)).execute(args));
 
     }
 

@@ -1,70 +1,85 @@
 package org.example;
-//https://api.github.com/search/repositories?q=created:>2026-07-17&sort=stars&order=desc&per_page=10
+
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.time.*;
-
+import java.time.LocalDate;
 
 public class APICall {
-    private final Main.Duration DURATION;
-    private final int LIMIT;
-    APICall(Main.Duration duration, int limit){
-    this.DURATION=duration;
-        this.LIMIT=limit;
+
+    private final Main.Duration duration;
+    private final int limit;
+    private final Parser parser;
+    private final HttpClient client = HttpClient.newHttpClient();
+
+    public APICall(Main.Duration duration, int limit, Parser parser) {
+        this.duration = duration;
+        this.limit = limit;
+        this.parser = parser;
     }
-    public LocalDate calculateDare(){
-        LocalDate localDate = LocalDate.now();
-        return switch (DURATION) {
-            case Main.Duration.MONTH -> localDate.minusMonths(1);
-            case Main.Duration.WEEK -> localDate.minusWeeks(1);
-            case Main.Duration.DAY -> localDate.minusDays(1);
-            case Main.Duration.YEAR -> localDate.minusYears(1);
+
+    private LocalDate calculateDate() {
+        LocalDate today = LocalDate.now();
+
+        return switch (duration) {
+            case DAY -> today.minusDays(1);
+            case WEEK -> today.minusWeeks(1);
+            case MONTH -> today.minusMonths(1);
+            case YEAR -> today.minusYears(1);
         };
     }
-    public void call(){
-        String query="created:>"+this.calculateDare();
-        String encodedURL;
+
+    private String buildUrl() {
+
+        String query = "created:>" + calculateDate();
+        String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
+
+        return "https://api.github.com/search/repositories?q="
+                + encodedQuery
+                + "&sort=stars"
+                + "&order=desc"
+                + "&per_page="
+                + limit;
+    }
+
+    private HttpRequest buildRequest(String url) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .header("User-Agent", "GitHubTrendingCLI")
+                .GET()
+                .build();
+    }
+
+    public void call() {
+
+        HttpRequest request = buildRequest(buildUrl());
+
         try {
-             encodedURL = URLEncoder.encode(query, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+
+            HttpResponse<String> response =
+                    client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                throw new RuntimeException(
+                        "GitHub API returned HTTP " + response.statusCode());
+            }
+
+            SearchResponse searchResponse =
+                    parser.parseRepositories(response.body());
+
+            parser.print(searchResponse);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to connect to GitHub.", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Request was interrupted.", e);
         }
-        HttpClient client = HttpClient.newBuilder().build();
-        HttpRequest request;
-        String url= "https://api.github.com/search/repositories?q="+encodedURL
-                +"&sort=stars&order=desc&per_page="+LIMIT;
-
-            try {
-                request = HttpRequest.newBuilder().uri(new URI(url))
-                        .header("Accept", "application/vnd.github+json")
-                        .header("X-GitHub-Api-Version", "2022-11-28")
-                        .header("User-Agent", "GitHubTrendingCLI")
-                        .GET().build();
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-
-        HttpResponse<String> response;
-
-
-            try {
-                response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                System.out.println(response.statusCode());
-                System.out.println(response.body());
-                //parser function
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
     }
 }
-//TODO: check api code status and body
